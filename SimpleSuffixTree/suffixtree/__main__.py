@@ -7,6 +7,7 @@ def suffixtree_root():
 def suffixtree_find(node, astr):
     while (astr[0] in node):
         node = node[astr[0]]
+        node[0].
         astr = astr[1:]
     return (node, astr)
     
