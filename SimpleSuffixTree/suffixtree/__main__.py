@@ -26,6 +26,7 @@ class SuffixTree:
 #             path.pop(-1)
         ostr += ')'
         return ostr
+    
     def is_root(self):
         return self.label == ''
     
@@ -69,7 +70,7 @@ with open(fname) as txtdata:
         a_line = a_line.strip()
         if not len(a_line):
             continue
-        print(a_line)
+        #print(a_line)
         for i in range(0, len(a_line)):
             #print(a_line[i:])
             stree.append(a_line[i:])
