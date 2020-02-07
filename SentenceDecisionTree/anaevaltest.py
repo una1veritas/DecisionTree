@@ -2,7 +2,7 @@
 #分析結果を評価する
 import pprint
 #ファイルをオープンする
-test_data = open("kranke.txt", "r")
+test_data = open("kranke.csv", "r")
 
 #行ごとに全て読み込んでリストデータにする
 lines = test_data.readlines()
