@@ -29,67 +29,64 @@ class DecisionTree:
         ostr += ')'
         return ostr
     
-    def make(self, data, propertyIndex, targetIndex, idIndex=None, query='SimpleReg'):
-#         if idIndex != None :
-#             tuples = zip([rec[idIndex] for rec in data], [ rec[propertyIndex] for rec in data], [ rec[targetIndex] for rec in data])
-#         else:
+    def set_label(self, lobj):
+        self.label = lobj
+    
+    def choose_simpleregx(self, data, propertyIndex, targetIndex):
+        words = set()
+        dataset = list()
+        target_classes = set()
+        for (a_line, a_target) in zip([ rec[propertyIndex] for rec in data], [ rec[targetIndex] for rec in data]):
+            if len(a_line) == 0 :
+                continue
+            dataset.append( (a_line, a_target) )
+            target_classes.add(a_target)
+            for a_word in [ a_line[i:j] for i in range(0, len(a_line)) for j in range(i+1, len(a_line))]:
+                words.add(a_word)
+        #print(words)
+        #print(targets)
+        if len(target_classes) == 1 :
+            print('choose_simpleregx: error, "Already uniquely classified."')
+            return ('', None)
+        (bestword, bestgain, bestdecision) = ('', 0, None)
+        for a_word in words:
+            #print(a_word)
+            decision = self.classify_simpleregx(a_word, dataset)
+            val = self.info_gain(decision)
+            #print(decision)
+            if bestgain < val or (bestgain == val and len(bestword) < len(a_word) ):
+                bestgain = val
+                bestword = a_word
+                bestdecision = decision
+            #print('-----')
+        print(bestword, bestdecision)
+        return (bestword, bestdecision)
         
-        if idIndex == None: 
-            tuples = zip(list(range(1,len(data)+1)), [ rec[propertyIndex] for rec in data], [ rec[targetIndex] for rec in data])
-        else:
-            tuples = zip([rec[idIndex] for rec in data], [ rec[propertyIndex] for rec in data], [ rec[targetIndex] for rec in data])
-        if query == 'SimpleReg' :
-            words = set()
-            targets = set()
-            dataset = list()
-            for (index, a_line, a_target) in tuples:
-                if len(a_line) == 0 :
-                    continue
-                dataset.append( (index, a_line, a_target) )
-                targets.add(a_target)
-                for i in range(0, len(a_line)) :
-                    for j in range(i+1, len(a_line)) :
-                        words.add(a_line[i:j])
-            print(words)
-            print(targets)
-            best = 0
-            bestword = ''
-            for a_word in words:
-                cnt = 0
-                val = self.info_gain(self.classify(a_word, dataset, query))
-                if best < cnt or (best == cnt and len(bestword) < len(a_word) ):
-                    best = cnt
-                    bestword = a_word
-            return (bestword, best)
-        else:
-            return
-        
-    def classify(self, labelobj, dataset, query):
-        if query =='SimpleReg' :
-            res = dict()
-            for (index, a_line, target) in dataset: 
-                if (labelobj in a_line) not in res:
-                    res[(labelobj in a_line)] = dict()
-                if target not in res[(labelobj in a_line)]:
-                    res[(labelobj in a_line)][target] = set()
-                res[(labelobj in a_line)][target].add(index)
+    def classify_simpleregx(self, labelobj, dataset):
+        res = dict()
+        for tuple in dataset: # (a_line, target)
+            #print(tuple)
+            ans = labelobj in tuple[0]
+            if ans not in res:
+                res[ans] = list()
+            res[ans].append( tuple )
         return res
     
     def info_gain(self, results):
-        number_answers = len(results.keys())
-        sum = 0
-        for an_answer in results.keys():
-            subsum = 0
-            for a_decided in results[an_answer].keys():
-                subsum += len(results[an_answer][a_decided]) 
-            number_keys = len(results[an_answer].keys())
-            subinfo = 0
-            print(an_answer, results[an_answer])
-            if number_keys != 0 and subsum != 0 :
-                for a_decided in results[an_answer].keys():
-                    subinfo += math.log(len(results[an_answer][a_decided])/subsum, number_keys)
-            sum += subsum
-        return sum
+        total = sum([ len(val) for key, val in results.items()])
+        info = 0
+        for ans, ans_group in results.items():
+            #print(ans, results[ans])
+            ans_entropy = 0
+            for a_class in set([ t[-1] for t in ans_group]):
+                prob = len([t for t in ans_group if t[-1] == a_class])/len(ans_group) if len(ans_group) > 0 else 0
+                ans_entropy +=  - prob * math.log(prob) if prob > 0 else 0 
+            #print(ans_entropy)
+            total += len(ans_group)
+            info += len(ans_group)/total * ans_entropy
+        info = info
+        #print(info, 1 - info)
+        return 1 - info
             
     def is_empty(self):
         return self.label == None
@@ -102,4 +99,7 @@ with open('./sampletext.csv') as dbfile:
 #db_neg = ''.split('\n')
 dtree = DecisionTree(None)
 print(dtree)
-print(dtree.make(db, 0, 1) )
+query, evaluation = dtree.choose_simpleregx(db, 0, 1)
+#print(query,evaluation)
+dtree.set_label(query)
+print(dtree)
