@@ -1,6 +1,6 @@
 #coding:utf-8
 #分析結果を評価する
-import pprint
+
 #ファイルをオープンする
 test_data = open("kranke.txt", "r")
 
@@ -84,8 +84,7 @@ for i in range(numb):
         elem_tuple  = tuple(ana_list[i][j])
         wordset.add(elem_tuple)
 
-pprint.pprint(wordset)
-pprint.pprint(ana_list)
+print(wordset)
 
 
 #クエリとしての評価値を返す関数
@@ -149,61 +148,28 @@ def mygini(ana_list,wordset,qword):
 #
 #エラー部分
 #
-    if len(mg_list) != 0:
-        delnum = list()
-        #print(mg_list)
-        #while poi < len
-        for poi in range(len(ana_list)):
-            #print(ana_list[poi])
-            #print(poi)
-            for oi in range(len(ana_list[poi])):
-                #print(ana_list[poi][oi])
-                #print(oi)
-                if mg_list[1] == ana_list[poi][oi]:
-                    true_list.append(ana_list[poi])
-                    remword = set() #単語の集合
-                    delnum.append(ana_list[poi])
-                    #ana_list.remove(ana_list[poi])
-                    break
 
-        for remnumb in range(len(true_list)):
-            for remnumt in range(len(true_list[remnumb])-1):
-                relem_tuple  = tuple(true_list[remnumb][remnumt])
-                if mg_list[1] != list(relem_tuple) and relem_tuple != wordset:
-                    remword.add(relem_tuple)
-
-        noi = 0
-        while noi < len(delnum):
-            ana_list.remove(delnum[noi])
-            noi+=1
+    for poi in range(0,len(ana_list)):
+        #print(ana_list[poi])
+        #print(poi)
+        for oi in range(0,len(ana_list[poi])):
+            #print(len(ana_list[poi][oi]))
+            if mg_list[1] == ana_list[poi][oi]:
+                true_list.append(ana_list[poi])
+                ana_list.remove(ana_list[poi])
 
 #
 #
 #
-        wordlist = list(wordset)
-        wordt = tuple(mg_list[1])
-        wordlist.remove(wordt)
-        false_list = ana_list
-        if len(remword) != 0:
-            for wordr in remword:
-                remfl = 0
-                wordrl = list(wordr)
-                for fanumb in range(len(false_list)):
-                    for fanumt in range(len(false_list[fanumb])):
-                        if wordrl == false_list[fanumb][fanumt]:
-                            remfl = 1
-                if remfl == 0:
-                    wordlist.remove(tuple(wordrl))
-        wordw = mg_list[1][0]
-        wordset = set(wordlist)
-        mygini(true_list,wordset,wordw)
-        mygini(false_list,wordset,wordw)
 
-        return
-#        print(mg_list)
-    #else:
-        #print(qword)
-        #print(ana_list)
+    wordlist = list(wordset)
+    wordlist.remove(word)
+    wordset = set(wordlist)
+    false_list = ana_list
+    wordw = wordl[0]
+    mygini(true_list,wordset,wordw)
+    mygini(false_list,wordset,wordw)
+    print(mg_list)
 
 mygini(ana_list,wordset,'start')
 

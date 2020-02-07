@@ -6,21 +6,32 @@ class DecisionTree:
     label = None
     children = None
     
-    def __init__(self, labelobj):
-        self.label = labelobj
+    def __init__(self, data, propIndex, targetIndex):
+        target_classes = [d[targetIndex] for d in data]
+        if len( set(target_classes) ) == 1 :
+            self.label = target_classes[0]
+            return
+        (word, decisions) = self.choose_simpleregx(data, propIndex, targetIndex)
+        self.label = word
         self.children = dict()
-    
+        for key in decisions :
+            self.children[key] = DecisionTree(decisions[key], propIndex, targetIndex)
+        return
+        
     def __str__(self):
         if self.is_empty() :
             ostr = 'DecisionTree'
         else:
             ostr = str(self.label)
-        if not self.children :
-            ostr += '()'
+        if self.is_leaf() or len(self.children) == 0 :
             return ostr
         ostr += '('
+        is_first_elem = True
         for key, val in sorted(self.children.items()):
-            ostr += val.__str__() + ', '
+            if not is_first_elem :
+                ostr += ', '
+            ostr += str(key) + '->' + val.__str__()
+            is_first_elem = False
 #         path = [self]
 #         while len(path):
 #             for a in sorted(path[-1].children.keys()):
@@ -28,9 +39,6 @@ class DecisionTree:
 #             path.pop(-1)
         ostr += ')'
         return ostr
-    
-    def set_label(self, lobj):
-        self.label = lobj
     
     def choose_simpleregx(self, data, propertyIndex, targetIndex):
         words = set()
@@ -87,19 +95,20 @@ class DecisionTree:
         info = info
         #print(info, 1 - info)
         return 1 - info
-            
+    
+    def is_leaf(self):
+        return self.children == None
+    
     def is_empty(self):
         return self.label == None
 
 db = list()
 with open('./sampletext.csv') as dbfile:
-    for a_record in [ a_line.strip().split() for a_line in dbfile.readlines()]:
+    for a_record in [ a_line.strip().split(',') for a_line in dbfile.readlines()]:
         db.append([ an_item.strip() for an_item in a_record])
 #db_pos = ''.split('\n')
 #db_neg = ''.split('\n')
-dtree = DecisionTree(None)
-print(dtree)
-query, evaluation = dtree.choose_simpleregx(db, 0, 1)
-#print(query,evaluation)
-dtree.set_label(query)
+print(db)
+dtree = DecisionTree(db, 0, 1)
+print('\nResult: ')
 print(dtree)
