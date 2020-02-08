@@ -1,35 +1,26 @@
 #coding:utf-8
-#分析結果を評価する
-import pprint
-#ファイルをオープンする
-test_data = open("kranke.csv", "r")
-
-#行ごとに全て読み込んでリストデータにする
-lines = test_data.readlines()
-
-#ファイルをクローズする
-test_data.close()
-
 #MeCabの準備
 import MeCab
+#分析結果を評価する
+import pprint
 
 def mecab_list(text):
-  tagger = MeCab.Tagger("-Ochasen")
-  tagger.parse('')
-  node = tagger.parseToNode(text)
-  word_class = []
-  while node:
-      word = node.surface
-      wclass = node.feature.split(',')
-      if wclass[0] != u'BOS/EOS':
-          if wclass[6] == None:
-              #word_class.append(list((list(word),list(wclass[0]),list(wclass[1]))))#,wclass[2],"")))
-              word_class.append(list((word,wclass[0],wclass[1])))
-          else:
-              #word_class.append(list((list(word),list(wclass[0]),list(wclass[1]))))#,wclass[2])))#,wclass[6])))
-              word_class.append(list((word,wclass[0],wclass[1])))
-      node = node.next
-  return word_class
+    tagger = MeCab.Tagger("-Ochasen")
+#    tagger.parse('')
+    node = tagger.parseToNode(text)
+    word_class = []
+    while node:
+        word = node.surface
+        wclass = node.feature.split(',')
+        if wclass[0] != u'BOS/EOS':
+#            if wclass[6] == None:
+                # word_class.append(list((list(word),list(wclass[0]),list(wclass[1]))))#,wclass[2],"")))
+                word_class.append(list((word, wclass[0], wclass[1])))
+#            else:
+                # word_class.append(list((list(word),list(wclass[0]),list(wclass[1]))))#,wclass[2])))#,wclass[6])))
+#                word_class.append(list((word, wclass[0], wclass[1])))
+        node = node.next
+    return word_class
 
 #分かち書きした結果を表示
 
@@ -62,11 +53,45 @@ def mecab_list(text):
 #今回答えがないので分類には別の関数使うのかなとか思ってしまう。
 #
 
+#ファイルをオープンする
+data = list()
+with open("kranke.csv", "r") as textfile:
+    #行ごとに全て読み込んでリストデータにする
+    for line in textfile.readlines():
+        data.append([item.strip() for item in line.split(',')])
+#ファイルをクローズする
+#test_data.close()
+#print(data)
+
+tagger = MeCab.Tagger("-Ochasen")
+for record in data :
+    node = tagger.parseToNode(record[0])
+    parsed = list()
+    while node:
+        winfo = node.feature.split(',')
+        if winfo[0] != u'BOS/EOS':
+            parsed.append( (node.surface, winfo[0], winfo[1]) )
+        node = node.next
+    record.append(parsed)
+
+print(data)
+
+words = dict()
+for a_record in data :
+    for word in a_record[2] :
+        if (word[1], word[2]) in [('助詞', '格助詞'), ('助詞', '接続助詞'), ('助動詞', '*')]:
+            continue
+        if (word[1], word[2]) not in words :
+            words[(word[1], word[2])] = set()
+        words[(word[1], word[2])].add(word[0])
+
+for key, value in words.items():
+    print(key, value)
 #解析結果をリストに変換
-ana_list = list()
-for line in lines:
-    mov = mecab_list(line)
-    ana_list.append(mov)
+#ana_list = list()
+#for line in table:
+#    mov = mecab_list(line[0])
+#    ana_list.append(mov)
 #print(ana_list)
 
 

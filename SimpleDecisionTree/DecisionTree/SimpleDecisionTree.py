@@ -30,7 +30,7 @@ class DecisionTree:
         for key, val in sorted(self.children.items()):
             if not is_first_elem :
                 ostr += ', '
-            ostr += str(key) + '->' + val.__str__()
+            ostr += str(key) + '-> ' + val.__str__()
             is_first_elem = False
 #         path = [self]
 #         while len(path):
@@ -103,7 +103,7 @@ class DecisionTree:
         return self.label == None
 
 db = list()
-with open('./sampletext.csv') as dbfile:
+with open('./kranke.csv') as dbfile:
     for a_record in [ a_line.strip().split(',') for a_line in dbfile.readlines()]:
         db.append([ an_item.strip() for an_item in a_record])
 #db_pos = ''.split('\n')
