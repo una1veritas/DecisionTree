@@ -1,21 +1,37 @@
 #
 #
 import math
+#import MeCab
 
 class DecisionTree:
     label = None
     children = None
     
-    def __init__(self, data, propIndex, targetIndex):
-        target_classes = [d[targetIndex] for d in data]
-        if len( set(target_classes) ) == 1 :
-            self.label = target_classes[0]
+    def __init__(self, labelObj=None, childs=None):
+        self.label = labelObj
+        self.children = childs
+    
+    def makeDecisionTree(self, database, selections, testColumn, targetColumn, queryType='simpleregex'):
+        if self.data_is_pure(database, selections, targetColumn) :
+            self.label = database[selections[0]][targetColumn]
+            self.children = None
             return
-        (word, decisions) = self.choose_simpleregx(data, propIndex, targetIndex)
-        self.label = word
+        #print(selections, testColumn, targetColumn)
+        if queryType == 'simpleregex' :
+            wordset = self.collect_substrings(database, selections, testColumn)
+            (word, decisions) = self.choose_substring(database, selections, wordset, testColumn, targetColumn)
+            self.label = word
+        elif queryType == 'analyzedword' :
+            print('error: type \''+str(queryType)+'\' is still not supported.')
+            return
+        else: 
+            print('error: type \''+str(queryType)+'\' is still not supported.')
+            return
         self.children = dict()
+        print(decisions)
         for key in decisions :
-            self.children[key] = DecisionTree(decisions[key], propIndex, targetIndex)
+            self.children[key] = DecisionTree()
+            self.children[key].makeDecisionTree(database, decisions[key], testColumn, targetColumn, queryType)
         return
         
     def __str__(self):
@@ -40,59 +56,62 @@ class DecisionTree:
         ostr += ')'
         return ostr
     
-    def choose_simpleregx(self, data, propertyIndex, targetIndex):
-        words = set()
-        dataset = list()
+    def data_is_pure(self, database, indices, targetColumn):
         target_classes = set()
-        for (a_line, a_target) in zip([ rec[propertyIndex] for rec in data], [ rec[targetIndex] for rec in data]):
+        for idx in indices:
+            target_classes.add(database[idx][targetColumn])
+        return len(target_classes) == 1
+    
+    def collect_substrings(self, databases, selections, textIndex):
+        words = set()
+        for idx in selections:
+            a_line = databases[idx][textIndex]
             if len(a_line) == 0 :
                 continue
-            dataset.append( (a_line, a_target) )
-            target_classes.add(a_target)
             for a_word in [ a_line[i:j] for i in range(0, len(a_line)) for j in range(i+1, len(a_line))]:
                 words.add(a_word)
-        #print(words)
-        #print(targets)
-        if len(target_classes) == 1 :
-            print('choose_simpleregx: error, "Already uniquely classified."')
-            return ('', None)
+        return words
+        
+    def choose_substring(self, database, selections, words, textColumn, targetColumn):
+        #if len(target_classes) == 1 :
+        #    print('choose_simpleregx: error, "Already uniquely classified."')
+        #    return ('', None)
         (bestword, bestgain, bestdecision) = ('', 0, None)
         for a_word in words:
-            #print(a_word)
-            decision = self.classify_simpleregx(a_word, dataset)
-            val = self.info_gain(decision)
-            #print(decision)
+            decision = self.classify_simpleregx(a_word, database, selections, textColumn, targetColumn)
+            val = self.info_gain(database, decision, targetColumn)
+            #print(a_word, val, decision)
             if bestgain < val or (bestgain == val and len(bestword) < len(a_word) ):
                 bestgain = val
                 bestword = a_word
                 bestdecision = decision
             #print('-----')
-        print(bestword, bestdecision)
+        #print(bestword, bestdecision)
         return (bestword, bestdecision)
         
-    def classify_simpleregx(self, labelobj, dataset):
+    def classify_simpleregx(self, labelobj, database, selections, testColumn, targetColumn):
         res = dict()
-        for tuple in dataset: # (a_line, target)
-            #print(tuple)
-            ans = labelobj in tuple[0]
+        for idx in selections:
+            ans = labelobj in database[idx][testColumn]
+            #print(labelobj, ans, rec[propertyIndex], rec[targetIndex])
             if ans not in res:
                 res[ans] = list()
-            res[ans].append( tuple )
+            res[ans].append( idx )
         return res
     
-    def info_gain(self, results):
-        total = sum([ len(val) for key, val in results.items()])
+    def info_gain(self, database, decisions, targetColumn):
+        total = sum([ len(val) for key, val in decisions.items()])
         info = 0
-        for ans, ans_group in results.items():
-            #print(ans, results[ans])
-            ans_entropy = 0
-            for a_class in set([ t[-1] for t in ans_group]):
-                prob = len([t for t in ans_group if t[-1] == a_class])/len(ans_group) if len(ans_group) > 0 else 0
-                ans_entropy +=  - prob * math.log(prob) if prob > 0 else 0 
+        for a_decision, selections in decisions.items():
+            decision_entropy = 0
+            target_class = set([ database[idx][targetColumn] for idx in selections])
+            for a_class in target_class:
+                prob = len([idx for idx in selections if database[idx][targetColumn] == a_class])/len(selections) if len(selections) > 0 else 0
+                decision_entropy +=  - prob * math.log(prob) if prob > 0 else 0 
             #print(ans_entropy)
-            total += len(ans_group)
-            info += len(ans_group)/total * ans_entropy
-        info = info
+            total += len(selections)
+            info += len(selections) * decision_entropy
+        info = info/total
         #print(info, 1 - info)
         return 1 - info
     
@@ -102,13 +121,20 @@ class DecisionTree:
     def is_empty(self):
         return self.label == None
 
+#program begins
+
 db = list()
+idx = 0
 with open('./kranke.csv') as dbfile:
     for a_record in [ a_line.strip().split(',') for a_line in dbfile.readlines()]:
-        db.append([ an_item.strip() for an_item in a_record])
+        if len(a_record) == 0:
+            continue
+        db.append(tuple([idx]+[ an_item.strip() for an_item in a_record]))
+        idx += 1
 #db_pos = ''.split('\n')
 #db_neg = ''.split('\n')
 print(db)
-dtree = DecisionTree(db, 0, 1)
+dtree = DecisionTree()
+dtree.makeDecisionTree(db, range(0, len(db)), 1, 2, 'simpleregex')
 print('\nResult: ')
 print(dtree)

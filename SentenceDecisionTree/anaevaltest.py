@@ -101,20 +101,22 @@ for key, value in words.items():
 #from sklearn import tree
 
 #要素リストより、要素が入った集合を作る
-wordset = set() #単語の集合
-numb = len(ana_list) #文章数
-for i in range(numb):
-    numt = len(ana_list[i])
-    for j in range(numt-1):
-        elem_tuple  = tuple(ana_list[i][j])
-        wordset.add(elem_tuple)
+#wordset = set() #単語の集合
+#numb = len(ana_list) #文章数
+#for i in range(numb):
+#    numt = len(ana_list[i])
+#    for j in range(numt-1):
+#        elem_tuple  = tuple(ana_list[i][j])
+##
+#pprint.pprint(wordset)
+#pprint.pprint(ana_list)
 
-pprint.pprint(wordset)
-pprint.pprint(ana_list)
-
-
+wordset = set()
+for ws in words.values():
+    wordset |= ws
+print(wordset)
+ana_list = data
 #クエリとしての評価値を返す関数
-
 
 def mygini(ana_list,wordset,qword):
     tcount = 0  #True文の数
