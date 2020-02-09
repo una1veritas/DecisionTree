@@ -121,6 +121,71 @@ class DecisionTree:
     def is_empty(self):
         return self.label == None
 
+    def collect_graphdefs(self, nodes, edges):
+        nodes.append(self.label)
+        for key, value in self.children.items():
+            edges.append( (self.label, value.label, key) )
+        for a_child in self.children.values() :
+            if not a_child.is_leaf() :
+                a_child.collect_graphdefs(nodes, edges)
+        return (nodes, edges)
+
+    def dot_script(self):
+        header = """digraph graph_name {
+  graph [
+    charset = "UTF-8";
+    label = "sample graph",
+    labelloc = "t",
+    labeljust = "c",
+    bgcolor = "#343434",
+    fontcolor = white,
+    fontsize = 18,
+    style = "filled",
+    rankdir = TB,
+    margin = 0.2,
+    splines = spline,
+    ranksep = 1.0,
+    nodesep = 0.9
+  ];
+
+  node [
+    colorscheme = "rdylgn11"
+    style = "solid,filled",
+    fontsize = 16,
+    fontcolor = 6,
+    fontname = "Migu 1M",
+    color = 7,
+    fillcolor = 11,
+    fixedsize = true,
+    height = 0.6,
+    width = 1.2
+  ];
+
+  edge [
+    style = solid,
+    fontsize = 14,
+    fontcolor = white,
+    fontname = "Migu 1M",
+    color = white,
+    labelfloat = true,
+    labeldistance = 2.5,
+    labelangle = 70
+  ];
+"""
+        footer = ' }'
+        
+        nodes = list()
+        edges = list()
+        self.collect_graphdefs(nodes, edges)
+        nodestr = '  // node definitions\n'
+        for a_node in nodes :
+            nodestr += '  ' + str(a_node) + ' [shape = box];\n'
+        edgestr = '  // edge definitions\n'
+        for an_edge in edges :
+            edgestr += '  ' + str(an_edge[0]) + ' -> ' + str(an_edge[1]) + ' [label = "{}", arrowhead = normal];\n'.format(an_edge[2])
+        return header+nodestr+edgestr+footer
+
+
 #program begins
 
 db = list()
@@ -138,3 +203,4 @@ dtree = DecisionTree()
 dtree.makeDecisionTree(db, range(0, len(db)), 1, 2, 'simpleregex')
 print('\nResult: ')
 print(dtree)
+print(dtree.dot_script())
