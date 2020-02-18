@@ -2,7 +2,6 @@
 #MeCabの準備
 import MeCab
 #分析結果を評価する
-import pprint
 
 def mecab_list(text):
     tagger = MeCab.Tagger("-Ochasen")
